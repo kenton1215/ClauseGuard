@@ -39,8 +39,10 @@ def score_findings(findings: list[dict], score_cfg: dict) -> tuple[int, str, boo
     hard = any(f.get("hard_block") for f in findings)
     for f in findings:
         level = f.get("level", "中")
-        deduct = score_cfg.get(f"deduct_{'high' if level == '高' else 'mid' if level == '中' else 'low'}",
-                               15 if level == "高" else 8 if level == "中" else 3)
+        if level == "低":
+            continue  # 低风险仅作简略提示，不参与评分（中等与重要风险才影响评分）
+        deduct = score_cfg.get(f"deduct_{'high' if level == '高' else 'mid'}",
+                               15 if level == "高" else 8)
         if str(f.get("rule_id", "")).startswith("AGENT-"):
             deduct = max(1, deduct // 2)  # LLM 建议减半计分
         score -= deduct

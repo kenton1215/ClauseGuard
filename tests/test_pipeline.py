@@ -141,6 +141,33 @@ def test_ip_rule_type_aware():
     assert run(to_b, "采购合同")["R030"]["level"] == "中"
 
 
+def test_minor_findings_do_not_affect_score():
+    """低风险/minor 发现不参与评分（中等与重要风险才影响评分）。"""
+    f_high = {"rule_id": "R001", "level": "高", "hard_block": False}
+    f_low = {"rule_id": "R014", "level": "低", "hard_block": False}
+    score, _, _ = score_findings([f_low], {"deduct_high": 15, "deduct_mid": 8, "deduct_low": 0,
+                                           "band_low": 80, "band_mid": 60, "band_high": 40})
+    assert score == 100  # 仅低风险 → 满分
+    score2, _, _ = score_findings([f_high, f_low], {"deduct_high": 15, "deduct_mid": 8, "deduct_low": 0,
+                                                    "band_low": 80, "band_mid": 60, "band_high": 40})
+    assert score2 == 85  # 低风险不影响
+
+
+def test_report_minor_summary():
+    """报告呈现：低风险合并为'其他一般性提示'简略区。"""
+    from core.report import build_report
+    settings = load_settings()
+    analyzer = ContractAnalyzer(settings, llm=None)
+    docx = (ROOT / "samples" / "高风险合同_示例.docx").read_bytes()
+    result = analyzer.analyze(docx, "高风险合同_示例.docx", "采购合同",
+                              commitment_warranty_months=36)
+    md = build_report(result)
+    assert "其他一般性提示" in md
+    assert "一般性提示 8 条" in md
+    # 低风险项不逐条展开为风险卡片
+    assert "### [风险#" not in md.split("其他一般性提示")[1].split("## 二")[0]
+
+
 def test_llm_findings_half_weight():
     f = {"rule_id": "AGENT-法律合规", "level": "高", "hard_block": False}
     score, _, _ = score_findings([f], {"deduct_high": 15, "deduct_mid": 8, "deduct_low": 3,

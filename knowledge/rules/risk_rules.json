@@ -1,314 +1,748 @@
 [
   {
-    "id": "R001", "title": "预付款比例过高", "category": "商业条件风险", "risk_level": "高",
-    "logic_type": "ratio_gt", "fact_key": "prepayment_ratio", "value": 30,
-    "keywords": ["预付款", "首付款", "首期款"],
+    "id": "R001",
+    "title": "预付款比例过高",
+    "category": "商业条件风险",
+    "risk_level": "高",
+    "logic_type": "ratio_gt",
+    "fact_key": "prepayment_ratio",
+    "value": 30,
+    "keywords": [
+      "预付款",
+      "首付款",
+      "首期款"
+    ],
     "hard_block": false,
     "suggestion": "将预付款比例降至30%以下；如谈判无法降低，应要求乙方提供等额预付款保函或履约担保，并将付款与交付里程碑挂钩。",
     "source": "企业采购管理制度（预付款一般不超过合同总额30%）",
-    "law_refs": [{"law": "民法典", "article": 510, "point": "合同约定不明的补充规则"}, {"law": "内控指引16号", "point": "付款审批与风险控制"}],
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 510,
+        "point": "合同约定不明的补充规则"
+      },
+      {
+        "law": "内控指引16号",
+        "point": "付款审批与风险控制"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R002", "title": "付款周期过长", "category": "商业条件风险", "risk_level": "中",
-    "logic_type": "days_gt", "fact_key": "payment_days", "value": 90,
-    "keywords": ["付款期限", "支付期限", "账期"],
+    "id": "R002",
+    "title": "付款周期过长",
+    "category": "商业条件风险",
+    "risk_level": "中",
+    "logic_type": "days_gt",
+    "fact_key": "payment_days",
+    "value": 90,
+    "keywords": [
+      "付款期限",
+      "支付期限",
+      "账期"
+    ],
     "hard_block": false,
     "suggestion": "缩短付款周期至90日内，明确验收节点、发票到达与付款时点的衔接，避免资金长期占压。",
     "source": "企业资金管理政策",
-    "law_refs": [{"law": "民法典", "article": 511, "point": "履行期限约定不明的规则"}],
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 511,
+        "point": "履行期限约定不明的规则"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R003", "title": "质保期低于承诺/行业惯例", "category": "技术规范风险", "risk_level": "中",
-    "logic_type": "value_lt", "fact_key": "warranty_months", "value": 12,
-    "keywords": ["质保期", "保修期", "保修期限"],
+    "id": "R003",
+    "title": "质保期低于承诺/行业惯例",
+    "category": "技术规范风险",
+    "risk_level": "中",
+    "logic_type": "value_lt",
+    "fact_key": "warranty_months",
+    "value": 12,
+    "keywords": [
+      "质保期",
+      "保修期",
+      "保修期限"
+    ],
     "hard_block": false,
     "suggestion": "核对投标文件/采购承诺中的质保期要求，按承诺修改；如确需缩短，应取得书面澄清依据。",
     "source": "投标承诺与合同条款一致性检查（参照行业采购审查实践）",
-    "law_refs": [{"law": "民法典", "article": 621, "point": "标的物质量与检验期间"}],
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 621,
+        "point": "标的物质量与检验期间"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R004", "title": "无限责任或不设上限的赔偿条款", "category": "法律合规风险", "risk_level": "高",
+    "id": "R004",
+    "title": "无限责任或不设上限的赔偿条款",
+    "category": "法律合规风险",
+    "risk_level": "高",
     "logic_type": "text_match",
     "pattern": "赔偿[^。；]{0,60}(全部|一切|无限|不设上限|上不封顶|所有损失)|承担[^。；]{0,30}(无限责任|一切损失)",
-    "keywords": ["无限责任", "不设上限", "全部损失", "一切损失"],
+    "keywords": [
+      "无限责任",
+      "不设上限",
+      "全部损失",
+      "一切损失"
+    ],
     "hard_block": true,
     "suggestion": "刚性风险：将赔偿责任限定为直接实际损失，设置赔偿上限（如合同总额的100%），排除间接损失与可得利益损失，并明确因果关系要求。",
     "source": "《民法典》第584条可预见性规则；企业合同审查规范",
-    "law_refs": [{"law": "民法典", "article": 584, "point": "损失赔偿的可预见性规则"}, {"law": "民法典", "article": 585, "point": "违约金与实际损失"}],
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 584,
+        "point": "损失赔偿的可预见性规则"
+      },
+      {
+        "law": "民法典",
+        "article": 585,
+        "point": "违约金与实际损失"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R005", "title": "缺少争议解决条款", "category": "法律合规风险", "risk_level": "中",
-    "logic_type": "missing", "fact_key": "dispute_mode",
-    "keywords": ["争议解决", "仲裁", "管辖法院"],
+    "id": "R005",
+    "title": "缺少争议解决条款",
+    "category": "法律合规风险",
+    "risk_level": "中",
+    "logic_type": "missing",
+    "fact_key": "dispute_mode",
+    "keywords": [
+      "争议解决",
+      "仲裁",
+      "管辖法院"
+    ],
     "hard_block": false,
     "suggestion": "补充争议解决条款：明确协商—调解—诉讼（或仲裁）的路径，约定管辖法院或仲裁机构、适用法律。",
     "source": "《民事诉讼法》第35条协议管辖",
-    "law_refs": [{"law": "民诉法", "article": 35, "point": "协议管辖的书面形式与实际联系地点"}],
+    "law_refs": [
+      {
+        "law": "民诉法",
+        "article": 35,
+        "point": "协议管辖的书面形式与实际联系地点"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R006", "title": "合同倒签（签订晚于履行起始日）", "category": "程序合规风险", "risk_level": "中",
-    "logic_type": "date_after", "fact_key": "signed_date", "compare_key": "performance_start",
-    "keywords": ["签订日期", "履行起始", "生效日期"],
+    "id": "R006",
+    "title": "合同倒签（签订晚于履行起始日）",
+    "category": "程序合规风险",
+    "risk_level": "中",
+    "logic_type": "date_after",
+    "fact_key": "signed_date",
+    "compare_key": "performance_start",
+    "keywords": [
+      "签订日期",
+      "履行起始",
+      "生效日期"
+    ],
     "hard_block": false,
     "suggestion": "合同签订日期晚于履行起始日期，属于倒签。应核实实际履行情况，补充倒签原因说明与审批记录，或调整日期表述。",
     "source": "企业内部控制要求（合同先审后签）",
-    "law_refs": [{"law": "内控指引16号", "point": "合同订立程序与授权审批"}],
+    "law_refs": [
+      {
+        "law": "内控指引16号",
+        "point": "合同订立程序与授权审批"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R007", "title": "缺少不可抗力条款", "category": "法律合规风险", "risk_level": "中",
-    "logic_type": "missing", "fact_key": "has_force_majeure",
-    "keywords": ["不可抗力"],
+    "id": "R007",
+    "title": "缺少不可抗力条款",
+    "category": "法律合规风险",
+    "risk_level": "低",
+    "logic_type": "missing",
+    "fact_key": "has_force_majeure",
+    "keywords": [
+      "不可抗力"
+    ],
     "hard_block": false,
-    "suggestion": "补充不可抗力条款：定义不可抗力事件范围、通知义务与时限、免责范围、持续超过特定期限的解除权。",
+    "suggestion": "补充不可抗力条款：定义不可抗力事件范围、通知义务与时限、免责范围、持续超过特定期限的解除权。（法定规则可兜底，简略提示）",
     "source": "《民法典》第180条不可抗力、第590条",
-    "law_refs": [{"law": "民法典", "article": 180, "point": "不可抗力的定义"}, {"law": "民法典", "article": 590, "point": "不可抗力的通知与免责"}],
-    "enabled": true
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 180,
+        "point": "不可抗力的定义"
+      },
+      {
+        "law": "民法典",
+        "article": 590,
+        "point": "不可抗力的通知与免责"
+      }
+    ],
+    "enabled": true,
+    "minor": true
   },
   {
-    "id": "R008", "title": "知识产权归属不清（技术类合同）", "category": "技术规范风险", "risk_level": "高",
-    "logic_type": "missing", "fact_key": "has_ip_clause",
-    "contract_types": ["技术开发合同", "技术转让合同", "合作开发合同", "软件采购合同", "技术服务合同"],
-    "keywords": ["知识产权", "著作权", "专利", "技术成果"],
+    "id": "R008",
+    "title": "知识产权归属不清（技术类合同）",
+    "category": "技术规范风险",
+    "risk_level": "高",
+    "logic_type": "missing",
+    "fact_key": "has_ip_clause",
+    "contract_types": [
+      "技术开发合同"
+    ],
+    "keywords": [
+      "知识产权",
+      "著作权",
+      "专利",
+      "技术成果"
+    ],
     "hard_block": false,
     "suggestion": "技术类合同缺少知识产权条款属于核心权益缺失：明确技术成果/交付物的知识产权归属（通常约定归甲方）、许可范围、二次开发权利与侵权责任分担。",
     "source": "《民法典》第861条技术开发合同成果归属",
-    "law_refs": [{"law": "民法典", "article": 861, "point": "技术开发成果的权利归属"}],
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 861,
+        "point": "技术开发成果的权利归属"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R008b", "title": "知识产权归属未明确", "category": "技术规范风险", "risk_level": "中",
+    "id": "R008b",
+    "title": "知识产权归属未明确",
+    "category": "技术规范风险",
+    "risk_level": "中",
     "logic_type": "ip_ambiguous",
-    "exclude_types": ["技术开发合同", "技术转让合同", "合作开发合同", "软件采购合同", "技术服务合同"],
-    "keywords": ["知识产权"],
+    "exclude_types": [
+      "技术开发合同"
+    ],
+    "keywords": [
+      "知识产权"
+    ],
     "hard_block": false,
     "suggestion": "合同提及知识产权但未明确归属。建议补充归属条款（一般约定归出资方/甲方）及使用许可范围；如确与本合同无关，可忽略本提示。",
     "source": "《民法典》第861条技术开发合同成果归属",
-    "law_refs": [{"law": "民法典", "article": 861, "point": "技术开发成果的权利归属"}],
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 861,
+        "point": "技术开发成果的权利归属"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R030", "title": "知识产权约定归对方所有", "category": "技术规范风险", "risk_level": "中",
-    "logic_type": "fact_equals", "fact_key": "ip_ownership", "values": ["乙方", "受托方", "供方"],
+    "id": "R030",
+    "title": "知识产权约定归对方所有",
+    "category": "技术规范风险",
+    "risk_level": "中",
+    "logic_type": "fact_equals",
+    "fact_key": "ip_ownership",
+    "values": [
+      "乙方",
+      "受托方",
+      "供方"
+    ],
     "level_by_type": {
-      "技术开发合同": "高", "技术转让合同": "高", "合作开发合同": "高",
-      "软件采购合同": "高", "技术服务合同": "高"
+      "技术开发合同": "高"
     },
-    "keywords": ["知识产权"],
+    "keywords": [
+      "知识产权"
+    ],
     "hard_block": false,
     "suggestion": "合同成果知识产权约定归对方所有，对己方不利。建议争取'成果知识产权归甲方所有'（出资方取得成果）；如确需让步，应约定甲方获得永久、免费、可转让的使用许可，并明确对方不得用于竞品。",
     "source": "《民法典》第861条技术开发合同成果归属",
-    "law_refs": [{"law": "民法典", "article": 861, "point": "技术开发成果的权利归属"}],
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 861,
+        "point": "技术开发成果的权利归属"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R009", "title": "违约金比例过高（存在调减风险）", "category": "法律合规风险", "risk_level": "中",
-    "logic_type": "ratio_gt", "fact_key": "penalty_ratio", "value": 30,
-    "keywords": ["违约金", "逾期付款违约金"],
+    "id": "R009",
+    "title": "违约金比例过高（存在调减风险）",
+    "category": "法律合规风险",
+    "risk_level": "中",
+    "logic_type": "ratio_gt",
+    "fact_key": "penalty_ratio",
+    "value": 30,
+    "keywords": [
+      "违约金",
+      "逾期付款违约金"
+    ],
     "hard_block": false,
     "suggestion": "违约金超过30%可能被法院以'过分高于损失'为由调减。建议将违约金控制在合理区间（一般不超过合同总额的30%），并约定损失赔偿与违约金的适用关系。",
     "source": "《民法典》第585条第2款（违约金过高可请求适当减少）",
-    "law_refs": [{"law": "民法典", "article": 585, "point": "违约金过高可请求法院适当减少"}],
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 585,
+        "point": "违约金过高可请求法院适当减少"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R010", "title": "主体信息不完整（缺少统一社会信用代码）", "category": "主体资格风险", "risk_level": "高",
-    "logic_type": "missing", "fact_key": "party_b_credit_code",
-    "keywords": ["统一社会信用代码", "信用代码"],
+    "id": "R010",
+    "title": "主体信息不完整（缺少统一社会信用代码）",
+    "category": "主体资格风险",
+    "risk_level": "高",
+    "logic_type": "missing",
+    "fact_key": "party_b_credit_code",
+    "keywords": [
+      "统一社会信用代码",
+      "信用代码"
+    ],
     "hard_block": true,
     "suggestion": "刚性风险：补充乙方统一社会信用代码，并通过国家企业信用信息公示系统核验主体存续状态、经营范围与资质。",
     "source": "企业主体资格核验要求",
-    "law_refs": [{"law": "公司法", "article": 32, "point": "公司登记事项公示"}, {"law": "内控指引16号", "point": "合同相对方资信调查"}],
+    "law_refs": [
+      {
+        "law": "公司法",
+        "article": 32,
+        "point": "公司登记事项公示"
+      },
+      {
+        "law": "内控指引16号",
+        "point": "合同相对方资信调查"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R011", "title": "管辖约定对己方不利", "category": "法律合规风险", "risk_level": "中",
-    "logic_type": "missing", "fact_key": "jurisdiction_favor",
-    "keywords": ["管辖", "管辖法院"],
+    "id": "R011",
+    "title": "管辖约定对己方不利",
+    "category": "法律合规风险",
+    "risk_level": "中",
+    "logic_type": "missing",
+    "fact_key": "jurisdiction_favor",
+    "keywords": [
+      "管辖",
+      "管辖法院"
+    ],
     "hard_block": false,
     "suggestion": "争取约定由甲方所在地人民法院管辖；若已约定乙方所在地，评估争议解决成本与执行风险后决定是否修改。",
     "source": "《民事诉讼法》第35条协议管辖",
-    "law_refs": [{"law": "民诉法", "article": 35, "point": "协议管辖可选择与争议有实际联系的地点"}],
+    "law_refs": [
+      {
+        "law": "民诉法",
+        "article": 35,
+        "point": "协议管辖可选择与争议有实际联系的地点"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R012", "title": "合同金额大小写不一致", "category": "程序合规风险", "risk_level": "高",
+    "id": "R012",
+    "title": "合同金额大小写不一致",
+    "category": "程序合规风险",
+    "risk_level": "高",
     "logic_type": "amount_mismatch",
-    "keywords": ["大写", "金额"],
+    "keywords": [
+      "大写",
+      "金额"
+    ],
     "hard_block": true,
     "suggestion": "刚性风险：大写与小写金额不一致，必须核对原始报价与审批单后统一修改，防止结算争议。",
     "source": "合同文本规范（大小写金额须一致，不一致时通常以大写为准）",
-    "law_refs": [{"law": "民法典", "article": 466, "point": "合同条款的解释规则"}],
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 466,
+        "point": "合同条款的解释规则"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R013", "title": "缺少解除/终止条款", "category": "法律合规风险", "risk_level": "中",
-    "logic_type": "missing", "fact_key": "has_termination_clause",
-    "keywords": ["解除合同", "合同解除", "终止"],
+    "id": "R013",
+    "title": "缺少解除/终止条款",
+    "category": "法律合规风险",
+    "risk_level": "低",
+    "logic_type": "missing",
+    "fact_key": "has_termination_clause",
+    "keywords": [
+      "解除合同",
+      "合同解除",
+      "终止"
+    ],
     "hard_block": false,
-    "suggestion": "补充合同解除条款：约定单方解除情形（严重违约、逾期超过特定期限）、解除通知程序与解除后的清算安排。",
+    "suggestion": "补充合同解除条款：约定单方解除情形（严重违约、逾期超过特定期限）、解除通知程序与解除后的清算安排。（法定规则可兜底，简略提示）",
     "source": "《民法典》第562-563条合同解除",
-    "law_refs": [{"law": "民法典", "article": 563, "point": "法定解除情形"}],
-    "enabled": true
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 563,
+        "point": "法定解除情形"
+      }
+    ],
+    "enabled": true,
+    "minor": true
   },
   {
-    "id": "R014", "title": "自动续约条款（存在遗忘终止风险）", "category": "商业条件风险", "risk_level": "低",
+    "id": "R014",
+    "title": "自动续约条款（存在遗忘终止风险）",
+    "category": "商业条件风险",
+    "risk_level": "低",
     "logic_type": "text_match",
     "pattern": "自动(?:续|延)(?:期|签|展)",
-    "keywords": ["自动续", "自动延"],
+    "keywords": [
+      "自动续",
+      "自动延"
+    ],
     "hard_block": false,
     "suggestion": "自动续约条款需配合到期前书面通知机制管理：建议约定'任一方可在期满前30日书面通知不续约'，并纳入合同到期台账提醒。",
     "source": "合同生命周期管理最佳实践",
-    "law_refs": [{"law": "民法典", "article": 558, "point": "后合同义务"}],
-    "enabled": true
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 558,
+        "point": "后合同义务"
+      }
+    ],
+    "enabled": true,
+    "minor": true
   },
   {
-    "id": "R015", "title": "缺少通知与送达条款", "category": "程序合规风险", "risk_level": "低",
-    "logic_type": "missing", "fact_key": "has_notice_clause",
-    "keywords": ["送达地址", "通知地址"],
+    "id": "R015",
+    "title": "缺少通知与送达条款",
+    "category": "程序合规风险",
+    "risk_level": "低",
+    "logic_type": "missing",
+    "fact_key": "has_notice_clause",
+    "keywords": [
+      "送达地址",
+      "通知地址"
+    ],
     "hard_block": false,
     "suggestion": "补充通知与送达条款：约定双方联系地址、联系人、电子邮箱，明确'按约定地址寄送即视为送达'，保障争议时程序权利。",
     "source": "《民事诉讼法》送达制度",
-    "law_refs": [{"law": "民诉法", "article": 88, "point": "直接送达与地址确认"}],
-    "enabled": true
+    "law_refs": [
+      {
+        "law": "民诉法",
+        "article": 88,
+        "point": "直接送达与地址确认"
+      }
+    ],
+    "enabled": true,
+    "minor": true
   },
   {
-    "id": "R016", "title": "履约期限过长（超过5年）", "category": "商业条件风险", "risk_level": "低",
-    "logic_type": "days_gt", "fact_key": "contract_days", "value": 1825,
-    "keywords": ["有效期", "合同期限"],
+    "id": "R016",
+    "title": "履约期限过长（超过5年）",
+    "category": "商业条件风险",
+    "risk_level": "低",
+    "logic_type": "days_gt",
+    "fact_key": "contract_days",
+    "value": 1825,
+    "keywords": [
+      "有效期",
+      "合同期限"
+    ],
     "hard_block": false,
     "suggestion": "履约期超过5年，建议增加阶段性评估/价格调整机制，明确市场变化时的重新议价条款，避免长期锁定风险。",
     "source": "企业合同期限管理政策",
-    "law_refs": [{"law": "民法典", "article": 533, "point": "情势变更原则"}],
-    "enabled": true
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 533,
+        "point": "情势变更原则"
+      }
+    ],
+    "enabled": true,
+    "minor": true
   },
   {
-    "id": "R017", "title": "单方任意解除权/权利义务明显失衡", "category": "法律合规风险", "risk_level": "高",
+    "id": "R017",
+    "title": "单方任意解除权/权利义务明显失衡",
+    "category": "法律合规风险",
+    "risk_level": "高",
     "logic_type": "text_match",
     "pattern": "甲方[^。；]{0,30}(?:随时|任意|无需任何理由)[^。；]{0,20}(?:解除|终止|变更)|乙方不得[^。；]{0,30}(?:解除|终止|变更)",
-    "keywords": ["随时解除", "任意解除", "单方解除"],
+    "keywords": [
+      "随时解除",
+      "任意解除",
+      "单方解除"
+    ],
     "hard_block": false,
     "suggestion": "约定对方享有单方任意解除权或限制己方解除权，权利义务失衡。建议改为'重大违约或法定情形方可解除'，并约定对等解除权。",
     "source": "《民法典》第496-497条格式条款的公平原则",
-    "law_refs": [{"law": "民法典", "article": 497, "point": "不合理免除己方责任、加重对方责任的格式条款无效"}],
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 497,
+        "point": "不合理免除己方责任、加重对方责任的格式条款无效"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R018", "title": "保密期限为永久/过长", "category": "法律合规风险", "risk_level": "低",
-    "logic_type": "days_gt", "fact_key": "secrecy_years", "value": 10,
-    "keywords": ["保密期", "保密期限"],
+    "id": "R018",
+    "title": "保密期限为永久/过长",
+    "category": "法律合规风险",
+    "risk_level": "低",
+    "logic_type": "days_gt",
+    "fact_key": "secrecy_years",
+    "value": 10,
+    "keywords": [
+      "保密期",
+      "保密期限"
+    ],
     "hard_block": false,
     "suggestion": "保密期限超过10年（或永久）的，建议区分商业秘密与一般信息，对核心商业秘密可永久保密，一般信息约定3-5年。",
     "source": "企业保密管理制度",
-    "law_refs": [{"law": "民法典", "article": 501, "point": "缔约保密义务"}],
-    "enabled": true
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 501,
+        "point": "缔约保密义务"
+      }
+    ],
+    "enabled": true,
+    "minor": true
   },
   {
-    "id": "R019", "title": "缺少保密条款", "category": "法律合规风险", "risk_level": "中",
-    "logic_type": "missing", "fact_key": "has_secrecy_clause",
-    "keywords": ["保密"],
+    "id": "R019",
+    "title": "缺少保密条款",
+    "category": "法律合规风险",
+    "risk_level": "中",
+    "logic_type": "missing",
+    "fact_key": "has_secrecy_clause",
+    "keywords": [
+      "保密"
+    ],
     "hard_block": false,
     "suggestion": "补充保密条款：明确保密信息范围、保密期限、例外情形（依法披露等）与违约责任。",
     "source": "《民法典》第501条缔约保密义务",
-    "law_refs": [{"law": "民法典", "article": 501, "point": "当事人在订立合同过程中知悉的商业秘密的保密义务"}],
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 501,
+        "point": "当事人在订立合同过程中知悉的商业秘密的保密义务"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R020", "title": "未约定生效条件", "category": "程序合规风险", "risk_level": "低",
+    "id": "R020",
+    "title": "未约定生效条件",
+    "category": "程序合规风险",
+    "risk_level": "低",
     "logic_type": "text_absent",
-    "keywords": ["生效", "签字盖章", "签字或盖章"],
+    "keywords": [
+      "生效",
+      "签字盖章",
+      "签字或盖章"
+    ],
     "hard_block": false,
     "suggestion": "明确合同生效条件（如'自双方法定代表人或授权代表签字并加盖公章之日起生效'），避免效力争议。",
     "source": "《民法典》第490条合同成立与生效",
-    "law_refs": [{"law": "民法典", "article": 490, "point": "签字、盖章时合同成立"}],
-    "enabled": true
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 490,
+        "point": "签字、盖章时合同成立"
+      }
+    ],
+    "enabled": true,
+    "minor": true
   },
   {
-    "id": "R022", "title": "付款节点与验收脱钩", "category": "商业条件风险", "risk_level": "中",
+    "id": "R022",
+    "title": "付款节点与验收脱钩",
+    "category": "商业条件风险",
+    "risk_level": "中",
     "logic_type": "text_match",
     "pattern": "(?:一次性支付|一次性付款|全额支付)[^。；]{0,40}(?:签订|签订后|合同签订)",
-    "keywords": ["一次性支付", "全额支付"],
+    "keywords": [
+      "一次性支付",
+      "全额支付"
+    ],
     "hard_block": false,
     "suggestion": "合同签订即一次性全额付款，缺乏验收约束。建议改为'预付款+进度款+验收后尾款'的付款结构，尾款比例建议不低于10%。",
     "source": "企业采购付款政策（付款须与验收节点挂钩）",
-    "law_refs": [{"law": "民法典", "article": 526, "point": "先履行抗辩权"}],
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 526,
+        "point": "先履行抗辩权"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R023", "title": "含税表述不清", "category": "商业条件风险", "risk_level": "低",
-    "logic_type": "missing", "fact_key": "tax_inclusive",
-    "keywords": ["含税", "增值税"],
+    "id": "R023",
+    "title": "含税表述不清",
+    "category": "商业条件风险",
+    "risk_level": "低",
+    "logic_type": "missing",
+    "fact_key": "tax_inclusive",
+    "keywords": [
+      "含税",
+      "增值税"
+    ],
     "hard_block": false,
     "suggestion": "明确合同价款是否含税、适用税率及发票类型（增值税专用发票/普通发票），避免结算争议。",
     "source": "企业税务管理要求",
-    "law_refs": [{"law": "民法典", "article": 510, "point": "价款约定不明的补充规则"}],
-    "enabled": true
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 510,
+        "point": "价款约定不明的补充规则"
+      }
+    ],
+    "enabled": true,
+    "minor": true
   },
   {
-    "id": "R024", "title": "逾期付款违约金缺失或过低", "category": "商业条件风险", "risk_level": "低",
-    "logic_type": "missing", "fact_key": "penalty_ratio",
-    "keywords": ["违约金", "逾期付款"],
+    "id": "R024",
+    "title": "逾期付款违约金缺失或过低",
+    "category": "商业条件风险",
+    "risk_level": "低",
+    "logic_type": "missing",
+    "fact_key": "penalty_ratio",
+    "keywords": [
+      "违约金",
+      "逾期付款"
+    ],
     "hard_block": false,
     "suggestion": "未约定逾期付款违约金。建议约定'逾期付款按未付金额的日万分之五支付违约金'（或与金融机构同期同类贷款利率挂钩），增强履约约束。",
     "source": "《民法典》第585条；企业合同审查实践",
-    "law_refs": [{"law": "民法典", "article": 585, "point": "违约金约定"}],
-    "enabled": true
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 585,
+        "point": "违约金约定"
+      }
+    ],
+    "enabled": true,
+    "minor": true
   },
   {
-    "id": "R025", "title": "验收标准缺失或模糊", "category": "技术规范风险", "risk_level": "中",
+    "id": "R025",
+    "title": "验收标准缺失或模糊",
+    "category": "技术规范风险",
+    "risk_level": "中",
     "logic_type": "text_absent",
-    "keywords": ["验收标准", "验收条件", "验收程序", "验收合格"],
+    "keywords": [
+      "验收标准",
+      "验收条件",
+      "验收程序",
+      "验收合格"
+    ],
     "hard_block": false,
     "suggestion": "补充验收条款：明确验收标准（引用国家标准/技术规范/附件）、验收程序、验收期限与异议处理机制。",
     "source": "《民法典》第620-623条检验与验收",
-    "law_refs": [{"law": "民法典", "article": 620, "point": "买受人的检验义务"}, {"law": "民法典", "article": 621, "point": "检验期间与通知义务"}],
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 620,
+        "point": "买受人的检验义务"
+      },
+      {
+        "law": "民法典",
+        "article": 621,
+        "point": "检验期间与通知义务"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R026", "title": "仲裁机构约定不明", "category": "法律合规风险", "risk_level": "高",
+    "id": "R026",
+    "title": "仲裁机构约定不明",
+    "category": "法律合规风险",
+    "risk_level": "高",
     "logic_type": "text_match",
     "pattern": "仲裁[^。；]{0,40}仲裁委员会[^。；]{0,20}仲裁",
-    "keywords": ["仲裁委员会"],
+    "keywords": [
+      "仲裁委员会"
+    ],
     "hard_block": false,
     "suggestion": "仲裁条款需明确指定唯一仲裁机构（如'提交中国国际经济贸易仲裁委员会仲裁'）；机构不明或或裁或审的约定可能被认定无效。",
     "source": "《仲裁法》第16条仲裁协议生效要件",
-    "law_refs": [{"law": "民法典", "article": 507, "point": "争议解决条款独立性"}],
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 507,
+        "point": "争议解决条款独立性"
+      }
+    ],
     "enabled": true
   },
   {
-    "id": "R027", "title": "缺少年度价格调整机制（长期服务类）", "category": "商业条件风险", "risk_level": "低",
+    "id": "R027",
+    "title": "缺少年度价格调整机制（长期服务类）",
+    "category": "商业条件风险",
+    "risk_level": "低",
     "logic_type": "text_match",
     "pattern": "价格[^。；]{0,30}(固定不变|保持不变|不得调整)",
-    "keywords": ["价格固定", "不得调整"],
+    "keywords": [
+      "价格固定",
+      "不得调整"
+    ],
     "hard_block": false,
     "suggestion": "长期合同中锁定固定价格存在风险，建议增加价格调整机制（如与CPI/行业指数挂钩）或约定重新议价触发条件。",
     "source": "《民法典》第533条情势变更",
-    "law_refs": [{"law": "民法典", "article": 533, "point": "情势变更与重新协商"}],
-    "enabled": true
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 533,
+        "point": "情势变更与重新协商"
+      }
+    ],
+    "enabled": true,
+    "minor": true
   },
   {
-    "id": "R028", "title": "缺少发票条款", "category": "程序合规风险", "risk_level": "低",
+    "id": "R028",
+    "title": "缺少发票条款",
+    "category": "程序合规风险",
+    "risk_level": "低",
     "logic_type": "text_absent",
-    "keywords": ["发票"],
+    "keywords": [
+      "发票"
+    ],
     "hard_block": false,
     "suggestion": "补充发票条款：约定发票类型、开票时点（如'收款后X个工作日内开具增值税专用发票'）与发票合规责任。",
     "source": "企业财务管理制度",
-    "law_refs": [{"law": "内控指引16号", "point": "付款与发票管理"}],
-    "enabled": true
+    "law_refs": [
+      {
+        "law": "内控指引16号",
+        "point": "付款与发票管理"
+      }
+    ],
+    "enabled": true,
+    "minor": true
   },
   {
-    "id": "R029", "title": "统一社会信用代码格式疑似有误", "category": "主体资格风险", "risk_level": "高",
-    "logic_type": "present", "fact_key": "credit_code_format_error",
-    "keywords": ["统一社会信用代码", "信用代码"],
+    "id": "R029",
+    "title": "统一社会信用代码格式疑似有误",
+    "category": "主体资格风险",
+    "risk_level": "高",
+    "logic_type": "present",
+    "fact_key": "credit_code_format_error",
+    "keywords": [
+      "统一社会信用代码",
+      "信用代码"
+    ],
     "hard_block": false,
     "suggestion": "18位主体代码含非法字符（统一社会信用代码不含I、O、S、V、Z）。请核对营业执照原件后更正，避免主体指向错误。",
     "source": "GB 32100-2015《法人和其他组织统一社会信用代码编码规则》",
-    "law_refs": [{"law": "公司法", "article": 32, "point": "公司登记事项公示"}],
+    "law_refs": [
+      {
+        "law": "公司法",
+        "article": 32,
+        "point": "公司登记事项公示"
+      }
+    ],
     "enabled": true
   }
 ]

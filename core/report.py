@@ -67,12 +67,14 @@ def build_report(result: ReviewResult) -> str:
         "",
     ]
 
-    # ---- 一、风险批注
-    lines.append(f"## 一、风险批注（共 {len(result.findings)} 条）")
+    # ---- 一、风险批注（中等与重要风险逐条展开；低风险合并简略提示）
+    major = [i for i in result.findings if i.get("level") != "低"]
+    minor = [i for i in result.findings if i.get("level") == "低"]
+    lines.append(f"## 一、风险批注（重要 {len(major)} 条，一般性提示 {len(minor)} 条）")
     lines.append("")
     if not result.findings:
         lines.append("未发现明显风险项。建议人工复核签章完整性、附件清单与审批文件。")
-    for i, issue in enumerate(result.findings, 1):
+    for i, issue in enumerate(major, 1):
         icon = LEVEL_ICON.get(issue.get("level"), "")
         hard = "【刚性不通过】" if issue.get("hard_block") else ""
         lines += [
@@ -89,6 +91,11 @@ def build_report(result: ReviewResult) -> str:
             lines.append(f"- 法条依据：{ref_str}")
         if issue.get("confidence") and issue["confidence"] < 0.9:
             lines.append(f"- 置信度：{issue['confidence']:.2f}（建议人工复核）")
+        lines.append("")
+    if minor:
+        lines.append("**其他一般性提示（风险较低，不参与评分）：**")
+        for i, issue in enumerate(minor, 1):
+            lines.append(f"{i}. {issue.get('title', '')}（{issue.get('location', '全文')}）")
         lines.append("")
 
     # ---- 二、合同要素摘要

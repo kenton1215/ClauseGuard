@@ -39,7 +39,7 @@ DEFAULT_SETTINGS = {
         "max_contract_days": 1825,  # 履约期上限(5年)
     },
     "score": {
-        "deduct_high": 15, "deduct_mid": 8, "deduct_low": 3,
+        "deduct_high": 15, "deduct_mid": 8, "deduct_low": 0,  # 低风险仅提示不扣分
         "band_low": 80, "band_mid": 60, "band_high": 40,
     },
 }

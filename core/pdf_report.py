@@ -142,12 +142,15 @@ def build_pdf_bytes(meta: dict, facts: dict, findings: list[dict]) -> bytes:
             styles["body"]))
     story.append(Spacer(1, 6))
 
-    # ---- 一、风险批注
-    story.append(Paragraph(f"一、风险批注（共 {len(findings)} 条）", styles["h2"]))
+    # ---- 一、风险批注（中等与重要风险逐条展开；低风险合并简略提示）
+    major = [f for f in findings if f.get("level") != "低"]
+    minor = [f for f in findings if f.get("level") == "低"]
+    story.append(Paragraph(
+        f"一、风险批注（重要 {len(major)} 条，一般性提示 {len(minor)} 条）", styles["h2"]))
     if not findings:
         story.append(Paragraph("未发现明显风险项。建议人工复核签章完整性、附件清单与审批文件。",
                                styles["body"]))
-    for i, f in enumerate(findings, 1):
+    for i, f in enumerate(major, 1):
         lv = f.get("level", "中")
         color = LEVEL_COLOR.get(lv, colors.black)
         hard = "　【刚性不通过】" if f.get("hard_block") else ""
@@ -185,6 +188,13 @@ def build_pdf_bytes(meta: dict, facts: dict, findings: list[dict]) -> bytes:
         ]))
         t.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), LEVEL_BG.get(lv, colors.white))]))
         story.append(t)
+
+    if minor:
+        story.append(Paragraph("其他一般性提示（风险较低，不参与评分）：", styles["body"]))
+        story.append(Paragraph(
+            "；".join(f"{i}. {f.get('title', '')}" for i, f in enumerate(minor, 1)),
+            styles["body"]))
+        story.append(Spacer(1, 4))
 
     # ---- 二、合同要素摘要
     story.append(Paragraph("二、合同要素摘要", styles["h2"]))

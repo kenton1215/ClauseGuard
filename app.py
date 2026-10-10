@@ -162,9 +162,10 @@ def render_upload():
         uploaded = st.file_uploader("上传合同文件（支持 PDF / Word / TXT）",
                                     type=["pdf", "docx", "doc", "txt"])
         col1, col2, col3 = st.columns(3)
-        contract_type = col1.selectbox("合同类型", ["采购合同", "销售合同", "服务合同", "技术开发合同",
-                                                    "技术转让合同", "合作开发合同", "软件采购合同",
-                                                    "技术服务合同", "建设工程合同", "租赁合同", "其他"])
+        contract_type = col1.selectbox(
+            "合同类型", ["采购合同", "服务合同", "技术开发合同", "建设工程合同", "租赁合同", "其他合同"],
+            help="采购合同：货物/设备/软件采购；服务合同：运维/咨询/劳务等；"
+                 "技术开发合同：技术开发/技术转让/合作开发/软件定制（涉及技术成果归属，审核更严格）。")
         commitment = col2.number_input("投标承诺质保期（月，选填）", min_value=0, max_value=120, value=0,
                                        help="如有投标文件承诺的质保期，填写后系统将自动比对合同质保期是否低于承诺。")
         enable_llm = col3.checkbox("本次启用 LLM 语义审查", value=(mode != "none"),
@@ -279,8 +280,10 @@ def review_pdf_bytes(review: dict) -> bytes:
 
 def render_finding_feedback(review_id: int, findings: list[dict]):
     st.markdown("### 🗳️ 风险批注处理（人工反馈闭环）")
-    st.caption("对每条批注点击「采纳」或「排除」，处理结果将回流知识库，用于优化规则与案例库。")
-    for i, f in enumerate(findings, 1):
+    st.caption("对每条重要批注点击「采纳」或「排除」，处理结果将回流知识库，用于优化规则与案例库。"
+               "（低风险提示已在报告中合并简示，不参与处理）")
+    major = [f for f in findings if f.get("level") != "低"]
+    for i, f in enumerate(major, 1):
         status = f.get("status", "待处理")
         icon = {"待处理": "⏳", "采纳": "✅", "排除": "❌"}.get(status, "⏳")
         cols = st.columns([7, 1, 1, 1])
