@@ -163,7 +163,8 @@ def render_upload():
                                     type=["pdf", "docx", "doc", "txt"])
         col1, col2, col3 = st.columns(3)
         contract_type = col1.selectbox("合同类型", ["采购合同", "销售合同", "服务合同", "技术开发合同",
-                                                    "建设工程合同", "租赁合同", "其他"])
+                                                    "技术转让合同", "合作开发合同", "软件采购合同",
+                                                    "技术服务合同", "建设工程合同", "租赁合同", "其他"])
         commitment = col2.number_input("投标承诺质保期（月，选填）", min_value=0, max_value=120, value=0,
                                        help="如有投标文件承诺的质保期，填写后系统将自动比对合同质保期是否低于承诺。")
         enable_llm = col3.checkbox("本次启用 LLM 语义审查", value=(mode != "none"),

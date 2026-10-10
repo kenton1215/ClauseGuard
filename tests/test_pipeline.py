@@ -107,6 +107,40 @@ def test_score_and_hard_block():
     assert score == 70
 
 
+def test_ip_rule_type_aware():
+    """知识产权规则按合同类型分级：
+    - 技术类合同缺 IP 条款 → 高（R008）；
+    - 一般合同完全不提 IP → 不报；提及但归属不明 → 中（R008b）；
+    - 约定归对方所有 → 技术类高 / 一般中（R030）。"""
+    engine = RuleEngine.from_file()
+
+    def run(text, ctype):
+        doc = parse_document(text.encode("utf-8"), "t.txt")
+        facts = extract_facts_regex(doc)["facts"]
+        return {f["rule_id"]: f for f in engine.evaluate(doc, facts, ctype)}
+
+    no_ip = "甲方采购办公设备一批，合同总金额人民币10万元。"
+    vague = no_ip + "涉及知识产权的，双方另行协商。"
+    to_b = no_ip + "本项目产生的技术成果知识产权归乙方所有。"
+
+    # 技术类合同：无 IP 条款 → R008 高
+    tech = run(no_ip, "技术开发合同")
+    assert "R008" in tech and tech["R008"]["level"] == "高"
+
+    # 一般合同：完全不提 IP → 不报
+    plain = run(no_ip, "采购合同")
+    assert "R008" not in plain and "R008b" not in plain
+
+    # 一般合同：提及但归属不明 → R008b 中
+    mid = run(vague, "采购合同")
+    assert "R008b" in mid and mid["R008b"]["level"] == "中"
+    assert "R008" not in mid  # 技术类专属规则不触发
+
+    # 归乙方所有：技术类高 / 一般合同默认中
+    assert run(to_b, "技术开发合同")["R030"]["level"] == "高"
+    assert run(to_b, "采购合同")["R030"]["level"] == "中"
+
+
 def test_llm_findings_half_weight():
     f = {"rule_id": "AGENT-法律合规", "level": "高", "hard_block": False}
     score, _, _ = score_findings([f], {"deduct_high": 15, "deduct_mid": 8, "deduct_low": 3,

@@ -39,15 +39,27 @@ class RuleEngine:
 
     # ------------------------------------------------------------ 求值
 
-    def evaluate(self, doc: ParsedDoc, facts: dict) -> list[dict]:
+    def evaluate(self, doc: ParsedDoc, facts: dict, contract_type: str = "") -> list[dict]:
         findings: list[dict] = []
         for rule in self.rules:
             if not rule.get("enabled", True):
                 continue
+            if not self._type_applies(rule, contract_type):
+                continue  # 合同类型过滤：该规则不适用于此类型
             hit, evidence = self._check(rule, doc, facts)
             if hit:
-                findings.append(self._build(rule, doc, facts, evidence))
+                findings.append(self._build(rule, doc, facts, evidence, contract_type))
         return findings
+
+    @staticmethod
+    def _type_applies(rule: dict, contract_type: str) -> bool:
+        """合同类型感知：contract_types=仅这些类型触发；exclude_types=这些类型不触发。"""
+        ct = contract_type or ""
+        if rule.get("contract_types") and ct not in rule["contract_types"]:
+            return False
+        if rule.get("exclude_types") and ct in rule["exclude_types"]:
+            return False
+        return True
 
     def _check(self, rule: dict, doc: ParsedDoc, facts: dict) -> tuple[bool, str]:
         logic = rule.get("logic_type", "")
@@ -104,20 +116,34 @@ class RuleEngine:
                 v = facts.get(key)
                 return (isinstance(v, (int, float)) and isinstance(value, (int, float))
                         and v < value), f"{key}={v} < 承诺{value}"
+            if logic == "ip_ambiguous":
+                # 提及知识产权但未明确归属（一般合同的降级提示）
+                return (facts.get("has_ip_clause") and not facts.get("ip_ownership")), "提及知识产权但归属未明确"
+            if logic == "fact_equals":
+                # 事实值命中指定集合（如知识产权归乙方/受托方）
+                values = rule.get("values", [])
+                v = facts.get(key)
+                return (v is not None and str(v) in values), f"{key}={v}"
         except (TypeError, ValueError):
             return False, ""
         return False, ""
 
-    def _build(self, rule: dict, doc: ParsedDoc, facts: dict, evidence: str) -> dict:
+    def _build(self, rule: dict, doc: ParsedDoc, facts: dict, evidence: str,
+               contract_type: str = "") -> dict:
         keywords = rule.get("keywords", [])
         location = self._locate(doc, keywords)
         if not evidence:
             evidence = self._snippet_by_keywords(doc, keywords)
+        # 风险等级可按合同类型细分（level_by_type），未命中细分则用默认等级
+        level = rule.get("risk_level", "中")
+        level_map = rule.get("level_by_type") or {}
+        if contract_type and contract_type in level_map:
+            level = level_map[contract_type]
         return {
             "rule_id": rule.get("id", ""),
             "title": rule.get("title", "风险项"),
             "category": rule.get("category", "通用"),
-            "level": rule.get("risk_level", "中"),
+            "level": level,
             "hard_block": bool(rule.get("hard_block", False)),
             "location": location,
             "evidence": evidence or "未定位到明确证据段落",

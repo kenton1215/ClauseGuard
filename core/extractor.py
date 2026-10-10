@@ -340,10 +340,10 @@ def extract_facts_regex(doc: ParsedDoc) -> dict:
     else:
         put("has_secrecy_clause", False, 0.9)
 
-    # ---- 知识产权归属
-    if re.search(r"知识产权", text):
+    # ---- 知识产权归属（支持"知识产权/技术成果…归X所有"跨行表述）
+    if re.search(r"知识产权|技术成果", text):
         put("has_ip_clause", True, 0.85)
-        m = re.search(r"知识产权[^。；\n]{0,40}?(?:归|属于)(甲方|乙方|双方|受托方|委托方)", text)
+        m = re.search(r"(?:知识产权|技术成果)[^。；]{0,60}?(?:归|属于)(甲方|乙方|双方|受托方|委托方)", text)
         if m:
             put("ip_ownership", m.group(1), 0.88)
 

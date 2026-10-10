@@ -106,7 +106,7 @@ class ContractAnalyzer:
         facts = extracted["facts"]
 
         report("执行风险规则引擎", 0.55)
-        findings = self.rules.evaluate(doc, facts)
+        findings = self.rules.evaluate(doc, facts, contract_type)
 
         # 外部承诺质保期比对（达观案例：投标承诺 vs 合同约定）
         if commitment_warranty_months and isinstance(facts.get("warranty_months"), (int, float)):
