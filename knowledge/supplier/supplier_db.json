@@ -1,0 +1,35 @@
+[
+  {
+    "name": "示例科技有限公司",
+    "credit_code": "91110108MA01DEM001",
+    "legal_rep": "张某",
+    "risk": {
+      "level": "高风险",
+      "flags": ["失信被执行人"],
+      "source": "中国执行信息公开网",
+      "checked_at": "2026-09-15"
+    }
+  },
+  {
+    "name": "示例建设工程有限公司",
+    "credit_code": "91310115MA01DEM902",
+    "legal_rep": "李某",
+    "risk": {
+      "level": "中风险",
+      "flags": ["1条行政处罚记录", "3条涉诉记录"],
+      "source": "国家企业信用信息公示系统/裁判文书网",
+      "checked_at": "2026-09-15"
+    }
+  },
+  {
+    "name": "示例软件服务有限公司",
+    "credit_code": "91440300MA01DEM903",
+    "legal_rep": "王某",
+    "risk": {
+      "level": "低风险",
+      "flags": [],
+      "source": "国家企业信用信息公示系统",
+      "checked_at": "2026-09-15"
+    }
+  }
+]

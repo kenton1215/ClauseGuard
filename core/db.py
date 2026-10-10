@@ -1,0 +1,378 @@
+# -*- coding: utf-8 -*-
+"""SQLite 数据层：用户、审核记录、风险批注、审计日志。
+
+安全说明：
+- 密码使用 PBKDF2-HMAC-SHA256 加盐哈希（旧版 sha256 哈希自动迁移）。
+- 审核记录与风险批注分离存储，支持人工反馈闭环（采纳/排除）。
+"""
+from __future__ import annotations
+
+import hashlib
+import secrets
+import sqlite3
+import threading
+from datetime import datetime
+
+from core.config import DB_PATH
+
+_lock = threading.Lock()
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    salt TEXT NOT NULL DEFAULT '',
+    hash_algo TEXT NOT NULL DEFAULT 'pbkdf2',
+    role TEXT NOT NULL DEFAULT 'user',
+    quota_total INTEGER NOT NULL DEFAULT 5,
+    review_count INTEGER NOT NULL DEFAULT 0,
+    llm_mode TEXT NOT NULL DEFAULT 'system',
+    llm_api_key TEXT NOT NULL DEFAULT '',
+    llm_base_url TEXT NOT NULL DEFAULT '',
+    llm_model TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    file_name TEXT NOT NULL,
+    file_size INTEGER DEFAULT 0,
+    contract_type TEXT DEFAULT '',
+    contract_name TEXT DEFAULT '',
+    contract_no TEXT DEFAULT '',
+    party_a TEXT DEFAULT '',
+    party_b TEXT DEFAULT '',
+    total_amount TEXT DEFAULT '',
+    score INTEGER DEFAULT 100,
+    risk_level TEXT DEFAULT '',
+    hard_block INTEGER DEFAULT 0,
+    issue_count INTEGER DEFAULT 0,
+    duration_ms INTEGER DEFAULT 0,
+    report_md TEXT DEFAULT '',
+    facts_json TEXT DEFAULT '{}',
+    findings_json TEXT DEFAULT '[]',
+    charged INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+CREATE TABLE IF NOT EXISTS findings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    review_id INTEGER NOT NULL,
+    seq INTEGER NOT NULL,
+    rule_id TEXT DEFAULT '',
+    category TEXT DEFAULT '',
+    title TEXT NOT NULL,
+    level TEXT NOT NULL DEFAULT '中',
+    hard_block INTEGER DEFAULT 0,
+    location TEXT DEFAULT '',
+    evidence TEXT DEFAULT '',
+    suggestion TEXT DEFAULT '',
+    basis TEXT DEFAULT '',
+    law_refs TEXT DEFAULT '[]',
+    confidence REAL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT '待处理',
+    feedback_at TEXT DEFAULT '',
+    FOREIGN KEY(review_id) REFERENCES reviews(id)
+);
+CREATE TABLE IF NOT EXISTS audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER DEFAULT 0,
+    username TEXT DEFAULT '',
+    action TEXT NOT NULL,
+    detail TEXT DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+CREATE INDEX IF NOT EXISTS idx_reviews_user ON reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_findings_review ON findings(review_id);
+CREATE TABLE IF NOT EXISTS paid_unlocks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    review_id INTEGER,
+    amount REAL NOT NULL DEFAULT 0.25,
+    status TEXT NOT NULL DEFAULT 'paid',
+    note TEXT DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+"""
+
+# 旧版表补充列（幂等迁移）
+def _migrate_llm_columns(conn: sqlite3.Connection) -> None:
+    try:
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(users)").fetchall()}
+        for col, ddl in (("llm_mode", "TEXT NOT NULL DEFAULT 'system'"),
+                         ("llm_api_key", "TEXT NOT NULL DEFAULT ''"),
+                         ("llm_base_url", "TEXT NOT NULL DEFAULT ''"),
+                         ("llm_model", "TEXT NOT NULL DEFAULT ''")):
+            if col not in cols:
+                conn.execute(f"ALTER TABLE users ADD COLUMN {col} {ddl}")
+        rcols = {r[1] for r in conn.execute("PRAGMA table_info(reviews)").fetchall()}
+        if "charged" not in rcols:
+            conn.execute("ALTER TABLE reviews ADD COLUMN charged INTEGER NOT NULL DEFAULT 1")
+        conn.commit()
+    except sqlite3.Error:
+        pass
+
+# 兼容旧版 Copilot 生成的表结构
+MIGRATIONS = [
+    # 旧表 users(username, password_hash, review_count) -> 新表
+    """INSERT OR IGNORE INTO users (username, password_hash, salt, hash_algo, role, quota_total, review_count)
+       SELECT username, password_hash, '', 'sha256', 'user', 5, review_count
+       FROM legacy_users WHERE 1""",
+    """INSERT OR IGNORE INTO reviews
+       (user_id, file_name, score, risk_level, issue_count, created_at)
+       SELECT u.id, r.file_name, r.score, r.risk_level, r.issue_count, r.reviewed_at
+       FROM legacy_review_history r JOIN users u ON u.username = r.username""",
+]
+
+
+def _migrate_legacy(conn: sqlite3.Connection) -> None:
+    """若存在旧版表（Copilot 生成），迁移数据到新表。"""
+    try:
+        has_legacy = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='legacy_users'").fetchone()
+        if has_legacy:
+            for sql in MIGRATIONS:
+                try:
+                    conn.execute(sql)
+                except sqlite3.Error:
+                    pass
+            conn.commit()
+    except sqlite3.Error:
+        pass
+
+
+def init_db() -> None:
+    conn = sqlite3.connect(DB_PATH)
+    conn.executescript(SCHEMA)
+    conn.commit()
+    # 旧表改名迁移（幂等）
+    try:
+        conn.execute("ALTER TABLE users RENAME TO legacy_users")
+        conn.executescript(SCHEMA)
+    except sqlite3.Error:
+        pass  # 新表已存在
+    try:
+        conn.execute("ALTER TABLE review_history RENAME TO legacy_review_history")
+    except sqlite3.Error:
+        pass
+    _migrate_legacy(conn)
+    _migrate_llm_columns(conn)
+    conn.commit()
+    conn.close()
+
+
+def get_db() -> sqlite3.Connection:
+    conn = sqlite3.connect(DB_PATH, timeout=15)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+# ---------------------------------------------------------------- 用户
+
+def hash_password(password: str, salt: str | None = None) -> tuple[str, str]:
+    if salt is None:
+        salt = secrets.token_hex(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"),
+                                 salt.encode("utf-8"), 120_000).hex()
+    return digest, salt
+
+
+def verify_password(user: sqlite3.Row, password: str) -> bool:
+    algo = user["hash_algo"] if "hash_algo" in user.keys() else "sha256"
+    if algo == "pbkdf2":
+        digest, _ = hash_password(password, user["salt"])
+        return secrets.compare_digest(digest, user["password_hash"])
+    # 兼容旧版 sha256 无盐哈希
+    legacy = hashlib.sha256(password.encode("utf-8")).hexdigest()
+    return secrets.compare_digest(legacy, user["password_hash"])
+
+
+def register_user(username: str, password: str) -> tuple[bool, str]:
+    username = username.strip()
+    if not username or len(username) > 50:
+        return False, "用户名不能为空且不超过50个字符。"
+    if len(password) < 6:
+        return False, "密码长度至少为6位。"
+    digest, salt = hash_password(password)
+    conn = get_db()
+    try:
+        is_first = conn.execute("SELECT COUNT(*) c FROM users").fetchone()["c"] == 0
+        role = "admin" if is_first else "user"  # 首个注册用户为管理员
+        conn.execute(
+            "INSERT INTO users (username, password_hash, salt, hash_algo, role) VALUES (?,?,?,?,?)",
+            (username, digest, salt, "pbkdf2", role))
+        conn.commit()
+        return True, ("注册成功，您已成为管理员，请登录。" if is_first else "注册成功，请登录。")
+    except sqlite3.IntegrityError:
+        return False, "用户名已存在，请更换。"
+    finally:
+        conn.close()
+
+
+def login_user(username: str, password: str) -> tuple[sqlite3.Row | None, str]:
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE username = ?", (username.strip(),)).fetchone()
+    conn.close()
+    if not user:
+        return None, "用户不存在。"
+    if not verify_password(user, password):
+        return None, "密码错误。"
+    return user, ""
+
+
+def get_user(username: str) -> sqlite3.Row | None:
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    conn.close()
+    return user
+
+
+def list_users() -> list[dict]:
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, username, role, quota_total, review_count, created_at FROM users ORDER BY id").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def save_user_llm(user_id: int, mode: str, api_key: str, base_url: str, model: str) -> None:
+    """保存用户级 LLM 配置（mode: system=系统默认 / custom=自有Key / none=关闭LLM）。
+    API Key 加密后入库（core.security.encrypt_secret），数据库泄露不直接暴露 Key。"""
+    from core.security import encrypt_secret
+    conn = get_db()
+    conn.execute(
+        "UPDATE users SET llm_mode=?, llm_api_key=?, llm_base_url=?, llm_model=? WHERE id=?",
+        (mode, encrypt_secret(api_key), base_url.strip(), model.strip(), user_id))
+    conn.commit()
+    conn.close()
+
+
+def insert_paid_unlock(user_id: int, review_id: int, amount: float, note: str = "") -> int:
+    """记录付费解锁（支付渠道后续接入，当前 status='paid' 为测试阶段模拟支付）。"""
+    conn = get_db()
+    cur = conn.execute(
+        "INSERT INTO paid_unlocks (user_id, review_id, amount, status, note) VALUES (?,?,?,?,?)",
+        (user_id, review_id, amount, "paid", note))
+    conn.commit()
+    uid = cur.lastrowid
+    conn.close()
+    return uid
+
+
+def set_quota(username: str, quota: int, reset_count: bool) -> None:
+    conn = get_db()
+    if reset_count:
+        conn.execute("UPDATE users SET quota_total = ?, review_count = 0 WHERE username = ?", (quota, username))
+    else:
+        conn.execute("UPDATE users SET quota_total = ? WHERE username = ?", (quota, username))
+    conn.commit()
+    conn.close()
+
+
+# ---------------------------------------------------------------- 审核记录
+
+def insert_review(user_id: int, meta: dict, report_md: str,
+                  facts_json: str, findings: list[dict], count_quota: bool = True) -> int:
+    """写入审核记录。count_quota=False 表示本次审核不消耗免费额度
+    （自有 Key 免费开放 / 付费解锁 / 纯规则引擎免费），并标记 charged=0
+    以便删除记录时不做额度返还。"""
+    conn = get_db()
+    cur = conn.execute(
+        """INSERT INTO reviews (user_id, file_name, file_size, contract_type, contract_name,
+            contract_no, party_a, party_b, total_amount, score, risk_level, hard_block,
+            issue_count, duration_ms, report_md, facts_json, findings_json, charged)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (user_id, meta["file_name"], meta.get("file_size", 0), meta.get("contract_type", ""),
+         meta.get("contract_name", ""), meta.get("contract_no", ""), meta.get("party_a", ""),
+         meta.get("party_b", ""), meta.get("total_amount", ""), meta.get("score", 100),
+         meta.get("risk_level", ""), 1 if meta.get("hard_block") else 0,
+         len(findings), meta.get("duration_ms", 0), report_md, facts_json,
+         json_dumps(findings), 1 if count_quota else 0))
+    review_id = cur.lastrowid
+    for i, f in enumerate(findings, start=1):
+        conn.execute(
+            """INSERT INTO findings (review_id, seq, rule_id, category, title, level, hard_block,
+                location, evidence, suggestion, basis, law_refs, confidence)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (review_id, i, f.get("rule_id", ""), f.get("category", ""), f.get("title", ""),
+             f.get("level", "中"), 1 if f.get("hard_block") else 0, f.get("location", ""),
+             f.get("evidence", ""), f.get("suggestion", ""), f.get("basis", ""),
+             json_dumps(f.get("law_refs", [])), f.get("confidence", 0)))
+    if count_quota:
+        conn.execute("UPDATE users SET review_count = review_count + 1 WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    return review_id
+
+
+def list_reviews(user_id: int) -> list[dict]:
+    conn = get_db()
+    rows = conn.execute(
+        """SELECT id, file_name, contract_type, contract_no, party_a, party_b, score,
+            risk_level, hard_block, issue_count, duration_ms, created_at
+           FROM reviews WHERE user_id = ? ORDER BY id DESC""", (user_id,)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_review(review_id: int) -> dict | None:
+    conn = get_db()
+    row = conn.execute("SELECT * FROM reviews WHERE id = ?", (review_id,)).fetchone()
+    findings = conn.execute(
+        "SELECT * FROM findings WHERE review_id = ? ORDER BY seq", (review_id,)).fetchall()
+    conn.close()
+    if not row:
+        return None
+    data = dict(row)
+    data["findings"] = [dict(f) for f in findings]
+    return data
+
+
+def set_finding_status(finding_id: int, status: str, note: str = "") -> None:
+    conn = get_db()
+    conn.execute(
+        "UPDATE findings SET status = ?, feedback_at = datetime('now','localtime') WHERE id = ?",
+        (status, finding_id))
+    conn.commit()
+    conn.close()
+
+
+def consume_quota(user_id: int) -> None:
+    """不留痕审核：只消耗额度，不写入审核记录。"""
+    conn = get_db()
+    conn.execute("UPDATE users SET review_count = review_count + 1 WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+
+
+def delete_review(review_id: int, user_id: int) -> bool:
+    """删除某条审核记录及其风险批注（仅限本人记录）。
+    仅当该记录实际消耗了免费额度（charged=1）时返还 1 次额度。"""
+    conn = get_db()
+    row = conn.execute("SELECT id, charged FROM reviews WHERE id = ? AND user_id = ?",
+                       (review_id, user_id)).fetchone()
+    if not row:
+        conn.close()
+        return False
+    conn.execute("DELETE FROM findings WHERE review_id = ?", (review_id,))
+    conn.execute("DELETE FROM reviews WHERE id = ?", (review_id,))
+    if row["charged"]:
+        conn.execute("UPDATE users SET review_count = MAX(0, review_count - 1) WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    return True
+
+
+# ---------------------------------------------------------------- 审计日志
+
+def audit(user_id: int, username: str, action: str, detail: str = "") -> None:
+    conn = get_db()
+    conn.execute("INSERT INTO audit_log (user_id, username, action, detail) VALUES (?,?,?,?)",
+                 (user_id, username, action, detail[:2000]))
+    conn.commit()
+    conn.close()
+
+
+def json_dumps(obj) -> str:
+    import json
+    return json.dumps(obj, ensure_ascii=False)

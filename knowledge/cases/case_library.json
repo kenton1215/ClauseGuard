@@ -1,0 +1,110 @@
+[
+  {
+    "case_id": "CASE-2025-001",
+    "contract_type": "采购合同",
+    "issue": "质保期限低于投标承诺",
+    "risk_level": "高",
+    "final_decision": "修改后签署",
+    "clause_text": "本合同质保期为验收合格后12个月。",
+    "suggestion": "合同应按投标承诺修订为36个月质保，并补充维修范围与响应时限。"
+  },
+  {
+    "case_id": "CASE-2025-002",
+    "contract_type": "技术服务合同",
+    "issue": "知识产权归属不清",
+    "risk_level": "高",
+    "final_decision": "待补证",
+    "clause_text": "项目成果知识产权归双方共同所有。",
+    "suggestion": "明确成果归属（建议归甲方）、许可范围和保密例外情形，避免'共同所有'的模糊表述。"
+  },
+  {
+    "case_id": "CASE-2025-003",
+    "contract_type": "软件采购合同",
+    "issue": "预付款比例偏高",
+    "risk_level": "中",
+    "final_decision": "业务确认后执行",
+    "clause_text": "合同签订后10日内支付合同总额的50%作为预付款。",
+    "suggestion": "预付款降至30%以下，或要求提供等额预付款保函，并绑定交付里程碑。"
+  },
+  {
+    "case_id": "CASE-2025-004",
+    "contract_type": "设备采购合同",
+    "issue": "无限责任条款",
+    "risk_level": "高",
+    "final_decision": "修改后签署",
+    "clause_text": "因乙方原因造成甲方任何损失的，乙方承担全部赔偿责任，包括间接损失。",
+    "suggestion": "删除'全部/间接损失'表述，赔偿责任以合同总额为上限，排除间接损失。"
+  },
+  {
+    "case_id": "CASE-2025-005",
+    "contract_type": "服务合同",
+    "issue": "缺少争议解决条款",
+    "risk_level": "中",
+    "final_decision": "补充后签署",
+    "clause_text": "（合同全文未约定争议解决方式）",
+    "suggestion": "补充'协商不成向甲方所在地法院起诉'条款，明确适用法律。"
+  },
+  {
+    "case_id": "CASE-2025-006",
+    "contract_type": "建设工程合同",
+    "issue": "合同倒签",
+    "risk_level": "中",
+    "final_decision": "补充说明后归档",
+    "clause_text": "签订日期2025-03-20，实际进场施工日期2025-02-10。",
+    "suggestion": "补办倒签原因说明与审批记录，或调整合同时间节点表述。"
+  },
+  {
+    "case_id": "CASE-2025-007",
+    "contract_type": "租赁合同",
+    "issue": "自动续约无终止提醒机制",
+    "risk_level": "低",
+    "final_decision": "采纳（增加通知条款）",
+    "clause_text": "租赁期满，双方未提出异议的，本合同自动续期一年。",
+    "suggestion": "增加'期满前30日书面通知不续约'机制，纳入合同到期台账管理。"
+  },
+  {
+    "case_id": "CASE-2025-008",
+    "contract_type": "采购合同",
+    "issue": "金额大小写不一致",
+    "risk_level": "高",
+    "final_decision": "退回修改",
+    "clause_text": "合同金额小写1,280,000元，大写壹佰贰拾捌万元整（实际为128万，小写多写0）。",
+    "suggestion": "核对审批单后统一大小写金额，按大写金额执行结算。"
+  },
+  {
+    "case_id": "CASE-2025-009",
+    "contract_type": "技术服务合同",
+    "issue": "单方任意解除权",
+    "risk_level": "高",
+    "final_decision": "修改后签署",
+    "clause_text": "甲方有权随时通知乙方解除本合同，且不承担任何责任。",
+    "suggestion": "改为'重大违约或法定情形方可解除'，删除'不承担任何责任'表述。"
+  },
+  {
+    "case_id": "CASE-2025-010",
+    "contract_type": "采购合同",
+    "issue": "付款周期过长",
+    "risk_level": "中",
+    "final_decision": "业务确认后执行",
+    "clause_text": "验收合格后120个工作日内支付合同款。",
+    "suggestion": "缩短至验收合格后60日内，并明确发票与付款时点衔接。"
+  },
+  {
+    "case_id": "CASE-2025-011",
+    "contract_type": "供应商合同",
+    "issue": "供应商失信风险",
+    "risk_level": "高",
+    "final_decision": "暂停签约",
+    "clause_text": "乙方被列入失信被执行人名单。",
+    "suggestion": "暂停签约流程，法务与采购联合评估，要求提供担保或更换供应商。"
+  },
+  {
+    "case_id": "CASE-2025-012",
+    "contract_type": "服务合同",
+    "issue": "验收标准缺失",
+    "risk_level": "中",
+    "final_decision": "补充后签署",
+    "clause_text": "服务质量达到甲方要求。",
+    "suggestion": "以附件形式明确量化验收标准、验收程序与异议处理机制。"
+  }
+]
