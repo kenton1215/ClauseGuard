@@ -49,8 +49,14 @@ EMPTY_SECRETS = {"llm": {}, "top": {}}
 
 
 def _st_secrets() -> dict:
-    """读取 Streamlit Cloud secrets（部署到 share.streamlit.io 时使用）。
+    """读取 Streamlit secrets（部署到 share.streamlit.io 时使用）。
+    先检查 secrets.toml 文件是否存在：本地未配置时直接返回空，
+    避免访问 st.secrets 触发 Streamlit 的 "No secrets found" 警告。
     非 Streamlit 环境（CLI/测试）安全返回空结构。"""
+    candidates = [ROOT / ".streamlit" / "secrets.toml",
+                  Path.home() / ".streamlit" / "secrets.toml"]
+    if not any(p.exists() for p in candidates):
+        return dict(EMPTY_SECRETS)
     try:
         import streamlit as st
         s = getattr(st, "secrets", None)
