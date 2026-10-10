@@ -74,6 +74,17 @@ docs/方案优化说明.md  方案优化与实施记录
 .venv\Scripts\python.exe scripts/run_analysis.py samples/高风险合同_示例.docx --llm             # LLM双通道
 ```
 
+## 部署到 Streamlit Cloud
+
+1. https://share.streamlit.io → New app → 选择本仓库 → 主文件 `app.py` → Deploy；
+2. 在 App Settings → Secrets 配置 LLM Key 与数据库（详见 [docs/部署StreamlitCloud.md](docs/部署StreamlitCloud.md)）：
+   ```toml
+   DEEPSEEK_API_KEY = "sk-xxx"
+   DATABASE_URL = "postgresql://user:pass@host:5432/dbname"
+   ```
+3. **数据库**：不配 `DATABASE_URL` 时为临时 SQLite（容器重启数据清空，仅演示）；
+   配 Supabase/Neon 免费 Postgres 后用户、审核记录、审计日志全部持久化。
+
 ## 风险等级
 
 - 80-100 低风险 · 60-79 中风险 · 40-59 较高风险 · 0-39 高风险

@@ -45,18 +45,51 @@ DEFAULT_SETTINGS = {
 }
 
 
+EMPTY_SECRETS = {"llm": {}, "top": {}}
+
+
+def _st_secrets() -> dict:
+    """读取 Streamlit Cloud secrets（部署到 share.streamlit.io 时使用）。
+    非 Streamlit 环境（CLI/测试）安全返回空结构。"""
+    try:
+        import streamlit as st
+        s = getattr(st, "secrets", None)
+        if not s:
+            return dict(EMPTY_SECRETS)
+        llm_cfg = dict(s.get("llm", {})) if isinstance(s.get("llm"), dict) else {}
+        top = {k: s[k] for k in ("DEEPSEEK_API_KEY", "DEEPSEEK_MODEL", "DEEPSEEK_BASE_URL",
+                                 "DASHSCOPE_API_KEY", "DATABASE_URL") if k in s}
+        return {"llm": llm_cfg, "top": top}
+    except Exception:  # noqa: BLE001
+        return dict(EMPTY_SECRETS)
+
+
 def _env_llm() -> dict:
-    """从环境变量读取 LLM 配置（兼容 .env 中的 DEEPSEEK_* 变量）。"""
+    """从环境变量 / Streamlit secrets 读取 LLM 配置（兼容 .env 中的 DEEPSEEK_* 变量）。
+    优先级：环境变量（本地 .env）> st.secrets（Streamlit Cloud）> 默认。"""
     out = {}
-    if os.getenv("DEEPSEEK_API_KEY"):
-        out["api_key"] = os.getenv("DEEPSEEK_API_KEY")
-        out["base_url"] = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
-        out["model"] = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
-    elif os.getenv("DASHSCOPE_API_KEY"):
-        out["api_key"] = os.getenv("DASHSCOPE_API_KEY")
+    secrets = _st_secrets()
+    env_api = os.getenv("DEEPSEEK_API_KEY") or secrets["top"].get("DEEPSEEK_API_KEY")
+    env_base = os.getenv("DEEPSEEK_BASE_URL") or secrets["top"].get("DEEPSEEK_BASE_URL")
+    env_model = os.getenv("DEEPSEEK_MODEL") or secrets["top"].get("DEEPSEEK_MODEL")
+    if env_api:
+        out["api_key"] = env_api
+        out["base_url"] = env_base or "https://api.deepseek.com"
+        out["model"] = env_model or "deepseek-chat"
+    elif os.getenv("DASHSCOPE_API_KEY") or secrets["top"].get("DASHSCOPE_API_KEY"):
+        out["api_key"] = os.getenv("DASHSCOPE_API_KEY") or secrets["top"]["DASHSCOPE_API_KEY"]
         out["base_url"] = os.getenv("BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
         out["model"] = "qwen-plus"
+    elif secrets["llm"].get("api_key"):
+        out.update(secrets["llm"])
     return out
+
+
+def get_db_url() -> str:
+    """外部数据库连接串（Streamlit Cloud 持久化用）。
+    未配置时返回空串 → 使用本地 SQLite（数据随容器重启丢失，仅演示）。"""
+    url = os.getenv("DATABASE_URL") or _st_secrets()["top"].get("DATABASE_URL") or ""
+    return url.strip()
 
 
 def load_settings() -> dict:

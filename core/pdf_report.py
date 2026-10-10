@@ -31,27 +31,37 @@ _FONTS_READY = False
 
 
 def _ensure_fonts() -> None:
-    """注册中文字体（微软雅黑，Windows 标配；缺失时回退宋体/黑体）。"""
+    """注册中文字体。查找顺序：
+    1. 项目内置开源字体 assets/fonts/wqy-microhei.ttc（随仓库分发，Streamlit Cloud 可用）；
+    2. Windows 系统字体（本地部署）；
+    3. Linux 常见系统字体（自托管容器）。"""
     global _FONTS_READY
     if _FONTS_READY:
         return
-    font_dir = Path("C:/Windows/Fonts")
+    project_fonts = Path(__file__).resolve().parent.parent / "assets" / "fonts"
     candidates = [
-        ("CN", ["msyh.ttc", "simsun.ttc", "simhei.ttf"]),
-        ("CN-Bold", ["msyhbd.ttc", "simhei.ttf", "msyh.ttc"]),
+        ("CN", [project_fonts / "wqy-microhei.ttc",
+                Path("C:/Windows/Fonts/msyh.ttc"),
+                Path("C:/Windows/Fonts/simsun.ttc"),
+                Path("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"),
+                Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc")]),
+        ("CN-Bold", [project_fonts / "wqy-microhei.ttc",
+                     Path("C:/Windows/Fonts/msyhbd.ttc"),
+                     Path("C:/Windows/Fonts/simhei.ttf"),
+                     Path("/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"),
+                     Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc")]),
     ]
-    for name, files in candidates:
-        for f in files:
-            path = font_dir / f
+    for name, paths in candidates:
+        for path in paths:
             if path.exists():
                 try:
                     pdfmetrics.registerFont(TTFont(name, str(path), subfontIndex=0))
                     break
                 except Exception:  # noqa: BLE001
                     continue
-    if "CN" not in pdfmetrics.getRegisteredFontNames():
-        return  # 无中文字体：使用 Helvetica（中文会乱码，但程序不崩溃）
-    _FONTS_READY = True
+    if "CN" in pdfmetrics.getRegisteredFontNames():
+        _FONTS_READY = True
+    # 无中文字体：使用 Helvetica（中文会乱码，但程序不崩溃）
 
 
 def _styles():
