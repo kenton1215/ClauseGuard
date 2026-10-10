@@ -54,8 +54,9 @@ def _sanitize_err(msg: str) -> str:
 
 
 def _sql(sql: str) -> str:
-    """占位符适配：SQLite 用 ?，PostgreSQL 用 %s。"""
-    return sql.replace("?", "%s") if _is_pg() else sql
+    """占位符适配：SQLite 用 ?，PostgreSQL 用 %s。
+    注意：PostgreSQL 连接失败降级后实际走 SQLite，必须跟随降级状态。"""
+    return sql.replace("?", "%s") if (_is_pg() and not _PG_DEGRADED) else sql
 
 
 # ---------------------------------------------------------------- 表结构

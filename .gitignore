@@ -29,3 +29,6 @@ Thumbs.db
 # ============ 临时文件 ============
 *.log
 *.tmp
+
+# Claude Code 会话文件
+.claude/
