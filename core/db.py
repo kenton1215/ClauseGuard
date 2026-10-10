@@ -22,9 +22,35 @@ from core.config import DB_PATH, get_db_url
 
 _lock = threading.Lock()
 
+# PostgreSQL 连接失败时的降级状态（Cloud 配置错误不应导致整个应用不可用）
+_PG_DEGRADED = False
+_PG_ERROR = ""
+
 
 def _is_pg() -> bool:
     return get_db_url().startswith(("postgresql://", "postgres://"))
+
+
+def is_degraded() -> bool:
+    """外部数据库连接失败、已降级为本地临时 SQLite。"""
+    return _PG_DEGRADED
+
+
+def get_degraded_note() -> str:
+    """降级原因（已脱敏，不含密码）。"""
+    return _PG_ERROR
+
+
+def _sanitize_err(msg: str) -> str:
+    """错误信息脱敏：替换连接串中的密码。"""
+    from urllib.parse import urlsplit
+    try:
+        pwd = urlsplit(get_db_url()).password
+        if pwd:
+            msg = msg.replace(pwd, "***")
+    except Exception:  # noqa: BLE001
+        pass
+    return msg[:300]
 
 
 def _sql(sql: str) -> str:
@@ -237,15 +263,15 @@ def _migrate_llm_columns(conn: sqlite3.Connection) -> None:
 
 def init_db() -> None:
     if _is_pg():
-        conn = get_db()
-        cur = conn.cursor()
-        for stmt in SCHEMA_PG.split(";"):
-            if stmt.strip():
-                cur.execute(stmt)
-        conn.commit()
-        _close(conn)
-        return
-
+        conn = get_db()  # 连接失败会自动降级为 SQLite，不抛异常
+        if not _PG_DEGRADED:
+            cur = conn.cursor()
+            for stmt in SCHEMA_PG.split(";"):
+                if stmt.strip():
+                    cur.execute(stmt)
+            _close(conn)
+            return
+    # SQLite 初始化（本地部署，或 PostgreSQL 降级后）
     conn = sqlite3.connect(DB_PATH)
     conn.executescript(SCHEMA_SQLITE)
     conn.commit()
@@ -266,11 +292,19 @@ def init_db() -> None:
 
 
 def get_db():
-    """统一连接入口：SQLite（本地）或 PostgreSQL（云端，DATABASE_URL）。"""
-    if _is_pg():
+    """统一连接入口：SQLite（本地）或 PostgreSQL（云端，DATABASE_URL）。
+    PostgreSQL 连接失败时自动降级为本地 SQLite（不抛异常），
+    降级原因可通过 is_degraded()/get_degraded_note() 获取。"""
+    global _PG_DEGRADED, _PG_ERROR
+    if _is_pg() and not _PG_DEGRADED:
         import psycopg
         from psycopg.rows import dict_row
-        return psycopg.connect(get_db_url(), row_factory=dict_row, autocommit=True)
+        try:
+            return psycopg.connect(get_db_url(), row_factory=dict_row,
+                                   autocommit=True, connect_timeout=10)
+        except Exception as e:  # noqa: BLE001  连接失败 → 降级
+            _PG_DEGRADED = True
+            _PG_ERROR = _sanitize_err(str(e))
     conn = sqlite3.connect(DB_PATH, timeout=15)
     conn.row_factory = sqlite3.Row
     return conn

@@ -625,6 +625,17 @@ def render_settings():
 
 def main():
     get_db_ready()
+    if db.is_degraded():
+        st.warning(
+            "⚠️ 外部数据库连接失败，已降级为临时本地存储（容器重启后数据会丢失）。\n\n"
+            f"失败原因：{db.get_degraded_note()}\n\n"
+            "请检查 Secrets 中的 DATABASE_URL：\n"
+            "- 确认连接串格式（postgresql://user:password@host:5432/dbname）；\n"
+            "- **Supabase 请使用 Session Pooler 连接串**（xxx.pooler.supabase.com，IPv4），"
+            "Direct connection 为 IPv6 地址，Streamlit Cloud 无法访问；\n"
+            "- Neon 请使用 Pooled connection 连接串；\n"
+            "- 连接串需包含 `?sslmode=require`。\n\n"
+            "修复后重启应用即可恢复持久化存储。详见 docs/部署StreamlitCloud.md。")
     if not st.session_state.get("logged_in"):
         render_auth()
         return

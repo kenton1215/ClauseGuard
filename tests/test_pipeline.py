@@ -178,6 +178,21 @@ def test_nav_redirect_via_apptest(tmp_db):
     assert radio.value == "📄 审核报告"
 
 
+def test_pg_connection_failure_degrades(tmp_path, monkeypatch):
+    """Cloud 场景：DATABASE_URL 连接失败 → 自动降级本地 SQLite，应用不崩溃。"""
+    from core import db
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@127.0.0.1:1/nodb")
+    monkeypatch.setattr(db, "DB_PATH", tmp_path / "test.db")
+    monkeypatch.setattr(db, "_PG_DEGRADED", False)
+    monkeypatch.setattr(db, "_PG_ERROR", "")
+    db.init_db()  # 不抛异常
+    assert db.is_degraded() is True
+    assert db.get_degraded_note()  # 有脱敏后的失败原因
+    assert "pass" not in db.get_degraded_note()  # 密码不泄露
+    ok, _ = db.register_user("降级用户", "pass123456")
+    assert ok and db.get_user("降级用户") is not None  # 降级后功能可用
+
+
 def test_build_report_no_crash():
     """回归测试：报告生成必须兼容全部 law_refs 形态（含无条款号的制度引用）。
     此前真实合同触发内控指引类引用时曾抛 KeyError: 'article'。"""

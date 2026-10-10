@@ -37,11 +37,21 @@ DATABASE_URL = "postgresql://user:password@host:5432/dbname"
 ### 方案 A：免费托管 PostgreSQL（推荐，数据持久化）
 
 1. 注册免费 Postgres（任选其一，均提供免费额度）：
-   - **Supabase**：https://supabase.com → 新建项目 → Settings → Database → Connection string（URI）
+   - **Supabase**：https://supabase.com → 新建项目 → Settings → Database → Connection string
    - **Neon**：https://neon.tech → 新建项目 → 复制连接串
 2. 把连接串填入 Secrets 的 `DATABASE_URL`（注意用 `postgresql://` 开头）；
 3. 重启应用 → 首次运行自动建表（users/reviews/findings/audit_log/paid_unlocks），
    用户注册、审核历史、审计日志全部持久化，多实例共享。
+
+> ⚠️ **关键：必须使用 Pooler / Pooled 连接串（IPv4）**
+> - Supabase 的 **Direct connection**（`db.xxx.supabase.co`）解析为 **IPv6 地址**，
+>   Streamlit Cloud 容器不支持 IPv6，会导致 `psycopg.OperationalError`；
+>   请改用 **Session pooler** 连接串：`postgresql://postgres.项目名:[密码]@aws-0-区域.pooler.supabase.com:6543/postgres`
+> - Neon 同理，请选择 **Pooled connection** 而非 Direct connection；
+> - 连接串末尾建议附加 `?sslmode=require`（psycopg3 一般可自动协商，附加更稳）。
+
+连接失败的兜底：应用不会崩溃，而是**自动降级为临时本地存储**并在页面顶部显示失败原因
+（含密码脱敏），修复 `DATABASE_URL` 后重启即恢复持久化。
 
 ### 方案 B：临时 SQLite（演示模式，不配 DATABASE_URL）
 
@@ -59,6 +69,7 @@ DATABASE_URL = "postgresql://user:password@host:5432/dbname"
 
 | 问题 | 处理 |
 | --- | --- |
+| `psycopg.OperationalError` | DATABASE_URL 连不上：改用 Supabase **Session Pooler** / Neon **Pooled** 连接串（IPv4），见上文方案 A 的提示框 |
 | 首次部署构建慢 | rapidocr-onnxruntime 依赖较大（约 200MB），耐心等待 5-10 分钟 |
 | 应用无访问自动休眠 | 正常现象，下次访问自动唤醒（约 30 秒）；如需保持在线需付费方案 |
 | 上传扫描件审核慢 | OCR 在 CPU 容器上较慢，扫描件建议先本地转换或耐心等待 |
