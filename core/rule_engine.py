@@ -61,11 +61,23 @@ class RuleEngine:
             return False
         return True
 
+    @staticmethod
+    def _role_applies(rule: dict, facts: dict) -> bool:
+        """买卖立场感知：party_role=buyer/seller，仅当甲方立场匹配时触发。
+        未识别立场时默认视为买方（采购视角，系统默认假设）。"""
+        rr = rule.get("party_role")
+        if not rr:
+            return True
+        role = facts.get("party_a_role") or "buyer"
+        return role == rr
+
     def _check(self, rule: dict, doc: ParsedDoc, facts: dict) -> tuple[bool, str]:
         logic = rule.get("logic_type", "")
         key = rule.get("fact_key", "")
         value = rule.get("value")
         text = doc.text
+        if not self._role_applies(rule, facts):
+            return False, ""
 
         try:
             if logic == "ratio_gt":
@@ -124,6 +136,12 @@ class RuleEngine:
                 values = rule.get("values", [])
                 v = facts.get(key)
                 return (v is not None and str(v) in values), f"{key}={v}"
+            if logic == "seller_credit_risk":
+                # 甲方为卖方：无预付款且付款周期超过阈值 → 回款风险
+                prepay = facts.get("prepayment_ratio")
+                days = facts.get("payment_days")
+                return ((not prepay) and isinstance(days, (int, float))
+                        and days > (value or 60)), f"无预付款且付款周期{days}天"
         except (TypeError, ValueError):
             return False, ""
         return False, ""

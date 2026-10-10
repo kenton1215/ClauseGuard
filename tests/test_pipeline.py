@@ -128,17 +128,43 @@ def test_ip_rule_type_aware():
     assert "R008" in tech and tech["R008"]["level"] == "高"
 
     # 一般合同：完全不提 IP → 不报
-    plain = run(no_ip, "采购合同")
+    plain = run(no_ip, "购销合同")
     assert "R008" not in plain and "R008b" not in plain
 
     # 一般合同：提及但归属不明 → R008b 中
-    mid = run(vague, "采购合同")
+    mid = run(vague, "购销合同")
     assert "R008b" in mid and mid["R008b"]["level"] == "中"
     assert "R008" not in mid  # 技术类专属规则不触发
 
     # 归乙方所有：技术类高 / 一般合同默认中
     assert run(to_b, "技术开发合同")["R030"]["level"] == "高"
-    assert run(to_b, "采购合同")["R030"]["level"] == "中"
+    assert run(to_b, "购销合同")["R030"]["level"] == "中"
+
+
+def test_buyer_seller_role_awareness():
+    """购销合同立场感知：预付款规则仅买方视角触发；卖方视角触发回款风险规则。"""
+    engine = RuleEngine.from_file()
+
+    def run(text):
+        doc = parse_document(text.encode("utf-8"), "t.txt")
+        facts = extract_facts_regex(doc)["facts"]
+        return facts, {f["rule_id"]: f for f in engine.evaluate(doc, facts, "购销合同")}
+
+    buyer_text = ("甲方（买方）：示例采购集团股份有限公司\n乙方（卖方）：示例科技有限公司\n"
+                  "合同签订后10日内，甲方支付合同总额的50%作为预付款。")
+    seller_text = ("甲方（卖方）：示例销售集团股份有限公司\n乙方（买方）：示例科技有限公司\n"
+                   "乙方验收合格后120个工作日内支付全部货款，无预付款。")
+
+    f1, r1 = run(buyer_text)
+    assert f1.get("party_a_role") == "buyer"
+    assert "R001" in r1 and r1["R001"]["level"] == "高"   # 买方视角：预付款过高
+    assert "R031" not in r1                               # 卖方规则不触发
+
+    f2, r2 = run(seller_text)
+    assert f2.get("party_a_role") == "seller"
+    assert "R001" not in r2                               # 卖方收预付款是好事，不报
+    assert "R031" in r2 and r2["R031"]["level"] == "中"   # 卖方视角：无预付款+账期120天 → 回款风险
+    assert "R002" in r2                                   # 付款周期过长（双方立场均为风险）
 
 
 def test_minor_findings_do_not_affect_score():
@@ -159,7 +185,7 @@ def test_report_minor_summary():
     settings = load_settings()
     analyzer = ContractAnalyzer(settings, llm=None)
     docx = (ROOT / "samples" / "高风险合同_示例.docx").read_bytes()
-    result = analyzer.analyze(docx, "高风险合同_示例.docx", "采购合同",
+    result = analyzer.analyze(docx, "高风险合同_示例.docx", "购销合同",
                               commitment_warranty_months=36)
     md = build_report(result)
     assert "其他一般性提示" in md
@@ -181,14 +207,14 @@ def test_end_to_end_risky_contract():
     settings = load_settings()
     analyzer = ContractAnalyzer(settings, llm=None)
     docx = (ROOT / "samples" / "高风险合同_示例.docx").read_bytes()
-    result = analyzer.analyze(docx, "高风险合同_示例.docx", "采购合同",
+    result = analyzer.analyze(docx, "高风险合同_示例.docx", "购销合同",
                               commitment_warranty_months=36)
     assert result.score <= 20
     assert result.risk_level == "高风险"
     assert result.hard_block is True
     titles = {f["title"] for f in result.findings}
     assert "预付款比例过高" in titles
-    assert "乙方命中供应商风险库（1项）" in titles
+    assert "乙方命中相对方风险库（1项）" in titles
     assert "质保期低于投标承诺" in titles
 
 
@@ -207,7 +233,7 @@ def test_pdf_report_generation():
     settings = load_settings()
     analyzer = ContractAnalyzer(settings, llm=None)
     docx = (ROOT / "samples" / "高风险合同_示例.docx").read_bytes()
-    result = analyzer.analyze(docx, "高风险合同_示例.docx", "采购合同",
+    result = analyzer.analyze(docx, "高风险合同_示例.docx", "购销合同",
                               commitment_warranty_months=36)
     meta = dict(result.meta)
     data = build_pdf_bytes(meta, result.facts, result.findings)
@@ -261,7 +287,7 @@ def test_build_report_no_crash():
     settings = load_settings()
     analyzer = ContractAnalyzer(settings, llm=None)
     docx = (ROOT / "samples" / "高风险合同_示例.docx").read_bytes()
-    result = analyzer.analyze(docx, "高风险合同_示例.docx", "采购合同",
+    result = analyzer.analyze(docx, "高风险合同_示例.docx", "购销合同",
                               commitment_warranty_months=36)
     report_md = build_report(result)
     assert "【合同智能预审报告】" in report_md
@@ -285,7 +311,7 @@ def test_user_and_quota_flow(tmp_db):
 
     review_id = db.insert_review(
         user["id"],
-        {"file_name": "t.docx", "file_size": 100, "contract_type": "采购合同",
+        {"file_name": "t.docx", "file_size": 100, "contract_type": "购销合同",
          "contract_no": "HT-1", "party_a": "甲", "party_b": "乙", "total_amount": "100",
          "score": 70, "risk_level": "中风险", "hard_block": False, "duration_ms": 100},
         "# 报告", "{}",
@@ -326,7 +352,7 @@ def test_delete_review_with_quota_refund(tmp_db):
     user, _ = db.login_user("删除测试", "pass123456")
     review_id = db.insert_review(
         user["id"],
-        {"file_name": "d.docx", "file_size": 10, "contract_type": "采购合同",
+        {"file_name": "d.docx", "file_size": 10, "contract_type": "购销合同",
          "contract_no": "", "party_a": "", "party_b": "", "total_amount": "",
          "score": 80, "risk_level": "低风险", "hard_block": False, "duration_ms": 10},
         "# 报告", "{}",
@@ -358,7 +384,7 @@ def test_weak_password(tmp_db):
     assert not ok
 
 
-META = {"file_name": "c.docx", "file_size": 10, "contract_type": "采购合同",
+META = {"file_name": "c.docx", "file_size": 10, "contract_type": "购销合同",
         "contract_no": "", "party_a": "", "party_b": "", "total_amount": "",
         "score": 80, "risk_level": "低风险", "hard_block": False, "duration_ms": 10}
 

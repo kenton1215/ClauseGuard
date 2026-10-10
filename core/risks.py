@@ -192,13 +192,13 @@ def check_supplier_db(facts: dict) -> list[dict]:
             flags = risk.get("flags", [])
             if flags:
                 findings.append({
-                    "rule_id": "SUP-01", "title": f"乙方命中供应商风险库（{len(flags)}项）",
+                    "rule_id": "SUP-01", "title": f"乙方命中相对方风险库（{len(flags)}项）",
                     "category": "履约能力风险", "level": "高",
                     "hard_block": any(f in ("失信被执行人", "经营异常", "吊销执照") for f in flags),
                     "location": "主体信息区",
                     "evidence": "；".join(f"{f}" for f in flags) + f"。风险等级：{risk.get('level', '未评级')}",
-                    "suggestion": "核实风险状态是否已消除；未消除的暂停签约或要求提供担保/更换供应商。",
-                    "basis": "供应商主数据库（企业信用信息公示系统/执行信息公开网数据）",
+                    "suggestion": "核实风险状态是否已消除；未消除的暂停签约或要求提供担保/更换相对方。",
+                    "basis": "相对方风险库（企业信用信息公示系统/执行信息公开网数据）",
                     "law_refs": [], "confidence": 0.95,
                 })
             break

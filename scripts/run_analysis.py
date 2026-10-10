@@ -21,7 +21,7 @@ def main():
     ap.add_argument("file")
     ap.add_argument("--llm", action="store_true", help="启用 LLM 通道")
     ap.add_argument("--commitment", type=int, default=0, help="投标承诺质保期(月)")
-    ap.add_argument("--contract-type", default="采购合同")
+    ap.add_argument("--contract-type", default="购销合同")
     ap.add_argument("--json", action="store_true", help="输出 JSON 摘要")
     args = ap.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")

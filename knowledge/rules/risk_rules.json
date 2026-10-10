@@ -26,7 +26,9 @@
         "point": "付款审批与风险控制"
       }
     ],
-    "enabled": true
+    "enabled": true,
+    "party_role": "buyer",
+    "_note": ""
   },
   {
     "id": "R002",
@@ -576,7 +578,9 @@
         "point": "先履行抗辩权"
       }
     ],
-    "enabled": true
+    "enabled": true,
+    "party_role": "buyer",
+    "_note": ""
   },
   {
     "id": "R023",
@@ -741,6 +745,31 @@
         "law": "公司法",
         "article": 32,
         "point": "公司登记事项公示"
+      }
+    ],
+    "enabled": true
+  },
+  {
+    "id": "R031",
+    "title": "回款风险：无预付款且付款周期过长",
+    "category": "商业条件风险",
+    "risk_level": "中",
+    "logic_type": "seller_credit_risk",
+    "value": 60,
+    "party_role": "seller",
+    "keywords": [
+      "付款",
+      "账期",
+      "回款"
+    ],
+    "hard_block": false,
+    "suggestion": "甲方作为卖方，无预付款且账期超过60日，回款风险偏高。建议：收取不低于30%的预付款、缩短账期、约定逾期付款违约金（每日万分之五）、对首次合作买方做资信核验或要求担保。",
+    "source": "销售合同回款风险管理实践",
+    "law_refs": [
+      {
+        "law": "民法典",
+        "article": 526,
+        "point": "先履行抗辩权"
       }
     ],
     "enabled": true

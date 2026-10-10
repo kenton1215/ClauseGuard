@@ -186,6 +186,16 @@ def extract_facts_regex(doc: ParsedDoc) -> dict:
             put("credit_code_format_error", code, 0.9)
             break
 
+    # ---- 甲方立场识别（购销合同：甲方是买方还是卖方，规则按立场适配）
+    if re.search(r"甲方\s*[（(]?\s*(?:买方|需方|采购方|买受人)", text):
+        put("party_a_role", "buyer", 0.9)
+    elif re.search(r"甲方\s*[（(]?\s*(?:卖方|供方|销售方|供货方|出卖人)", text):
+        put("party_a_role", "seller", 0.9)
+    elif "买方" in text and "卖方" not in text:
+        put("party_a_role", "buyer", 0.7)  # 仅有买方表述，推定甲方为买方
+    elif "卖方" in text and "买方" not in text:
+        put("party_a_role", "seller", 0.7)
+
     # ---- 合同编号
     m = re.search(r"(?:合同编号|合同号|Contract\s*No\.?)[:：]?\s*([A-Za-z0-9\-_/（）()]{3,40})", text)
     if m:
